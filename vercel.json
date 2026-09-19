@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron?task=expire", "schedule": "30 1 * * *" },
+    { "path": "/api/cron?task=links", "schedule": "0 2 * * 0" }
+  ]
+}

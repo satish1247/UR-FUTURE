@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Design tokens from DESIGN-elevenlabs.md — the single source for colors, type, radii, shadow. */
+@theme {
+  --color-canvas: #f5f5f5;
+  --color-canvas-soft: #fafafa;
+  --color-surface: #ffffff;
+  --color-surface-strong: #f0efed;
+  --color-ink: #0c0a09;
+  --color-primary: #292524;
+  --color-primary-active: #0c0a09;
+  --color-body: #4e4e4e;
+  --color-muted: #777169;
+  --color-muted-soft: #a8a29e;
+  --color-hairline: #e7e5e4;
+  --color-hairline-soft: #f0efed;
+  --color-hairline-strong: #d6d3d1;
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+  --color-orb-mint: #a7e5d3;
+  --color-orb-lavender: #c8b8e0;
+  --color-orb-sky: #a8c8e8;
+
+  --font-display: var(--font-newsreader), "Times New Roman", serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  letter-spacing: 0.16px;
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+@utility label {
+  @apply text-xs font-semibold uppercase tracking-[0.08em] text-muted;
+}
+@utility card {
+  @apply rounded-xl border border-hairline bg-surface;
+}
+@utility btn {
+  @apply inline-flex h-10 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-medium leading-none transition-colors;
+}
+@utility btn-primary {
+  @apply btn bg-primary text-white hover:bg-primary-active;
+}
+@utility btn-outline {
+  @apply btn border border-hairline-strong text-ink hover:bg-surface;
+}
+@utility badge {
+  @apply inline-flex items-center rounded-full bg-surface-strong px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink;
+}
+@utility chip {
+  @apply inline-flex h-9 items-center rounded-full border border-hairline-strong px-4 text-sm font-medium text-ink hover:bg-surface;
+}
+@utility chip-on {
+  @apply chip border-primary bg-primary text-white hover:bg-primary;
+}
+@utility input {
+  @apply h-11 w-full rounded-md border border-hairline-strong bg-surface px-4 text-base text-ink outline-none focus:border-ink focus:ring-1 focus:ring-ink;
+}
+@utility container-page {
+  @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6;
+}

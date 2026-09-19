@@ -1,0 +1,50 @@
+import type { Metadata } from "next";
+import { Inter, Newsreader } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/config/site";
+import "./globals.css";
+
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "600"] });
+// Waldenburg is licensed; Newsreader Light is the free stand-in.
+const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], weight: ["300"] });
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: { default: `${SITE_NAME} — R&A jobs and internships`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  openGraph: { siteName: SITE_NAME, type: "website" },
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html lang="en" className={`${inter.variable} ${newsreader.variable} antialiased`}>
+      <body className="flex min-h-screen flex-col">
+        <header className="border-b border-hairline bg-canvas">
+          <nav className="container-page flex h-16 items-center justify-between">
+            <Link href="/" className="display flex items-center gap-2 text-2xl">
+              <Image src="/logo-mark.png" alt="" width={45} height={32} priority />
+              <span className="hidden min-[400px]:inline">{SITE_NAME}</span>
+            </Link>
+            <div className="flex items-center gap-4 text-[15px] sm:gap-5 font-medium text-ink">
+              <Link href="/?type=internship" className="hidden sm:inline">Internships</Link>
+              <Link href="/my-jobs">My jobs</Link>
+              <Link href="/profile">Job alerts</Link>
+              <Link href="/about">About</Link>
+            </div>
+          </nav>
+        </header>
+        <main className="flex-1">{children}</main>
+        <footer className="border-t border-hairline">
+          <div className="container-page flex flex-col gap-2 py-10 text-[15px] sm:flex-row sm:justify-between">
+            <p>{SITE_NAME} is free for Robotics & Automation students. We link to official company pages only.</p>
+            <div className="flex gap-4">
+              <Link href="/privacy" className="text-ink underline-offset-4 hover:underline">Privacy</Link>
+              <Link href="/about" className="text-ink underline-offset-4 hover:underline">Built by a student — contact</Link>
+            </div>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}
