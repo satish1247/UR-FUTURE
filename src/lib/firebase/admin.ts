@@ -10,7 +10,8 @@ function initAdmin(): App {
   // Emulator needs no credentials; production needs the service-account trio.
   if (process.env.FIRESTORE_EMULATOR_HOST) return initializeApp({ projectId });
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  // Accept the key pasted with or without surrounding quotes, with real or escaped (\n) newlines.
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim().replace(/^["']|["']$/g, "").replace(/\\n/g, "\n");
   if (!clientEmail || !privateKey) {
     throw new Error("Missing FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY (see .env.example)");
   }
