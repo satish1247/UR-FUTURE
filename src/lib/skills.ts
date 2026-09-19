@@ -3,7 +3,7 @@
 // Each entry: [display name, ...aliases]. Aliases are matched case-insensitively as whole words.
 // Keyword matching, not AI. Add aliases here when a real resume/job is missed.
 const VOCAB: string[][] = [
-  // Robotics
+  ["#Robotics & Automation"],
   ["ROS", "ros", "robot operating system"],
   ["ROS2", "ros2", "ros 2"],
   ["Gazebo", "gazebo"],
@@ -20,7 +20,7 @@ const VOCAB: string[][] = [
   ["Kinematics", "kinematics", "inverse kinematics", "forward kinematics"],
   ["Motion planning", "motion planning", "path planning", "trajectory planning"],
   ["Robot vision", "robot vision"],
-  // Industrial automation
+  ["#Robotics & Automation"],
   ["PLC", "plc", "plcs", "programmable logic controller", "programmable logic controllers"],
   ["Ladder logic", "ladder logic", "ladder diagram"],
   ["SCADA", "scada"],
@@ -51,7 +51,7 @@ const VOCAB: string[][] = [
   ["CAN bus", "can bus", "canbus", "can protocol"],
   ["IIoT", "iiot", "industrial iot", "industry 4.0"],
   ["MES", "mes", "manufacturing execution system"],
-  // Instrumentation & control
+  ["#Robotics & Automation"],
   ["Instrumentation", "instrumentation"],
   ["Process control", "process control"],
   ["PID control", "pid", "pid controller", "pid control"],
@@ -60,7 +60,7 @@ const VOCAB: string[][] = [
   ["P&ID", "p&id", "piping and instrumentation"],
   ["Sensors", "sensors", "sensor interfacing", "transducers"],
   ["HART", "hart protocol"],
-  // Embedded & IoT
+  ["#Embedded & Electronics"],
   ["Embedded C", "embedded c"],
   ["C", "c programming", "c language"],
   ["C++", "c++", "cpp"],
@@ -78,7 +78,7 @@ const VOCAB: string[][] = [
   ["Circuit design", "circuit design", "analog circuits", "digital electronics"],
   ["FPGA", "fpga", "verilog", "vhdl"],
   ["Proteus", "proteus"],
-  // Mechatronics & design
+  ["#Design & Simulation"],
   ["SolidWorks", "solidworks", "solid works"],
   ["AutoCAD", "autocad", "auto cad"],
   ["CATIA", "catia"],
@@ -90,13 +90,13 @@ const VOCAB: string[][] = [
   ["GD&T", "gd&t"],
   ["Mechatronics", "mechatronics"],
   ["Mechanical design", "mechanical design", "machine design"],
-  // Autonomous systems
+  ["#Robotics & Automation"],
   ["Drones / UAV", "drone", "drones", "uav", "uavs", "quadcopter"],
   ["PX4 / ArduPilot", "px4", "ardupilot"],
   ["AGV/AMR", "agv", "amr", "autonomous mobile robot"],
   ["Autonomous navigation", "autonomous navigation", "localization", "sensor fusion", "kalman filter"],
   ["LiDAR", "lidar"],
-  // Software / AI
+  ["#Programming & AI"],
   ["Python", "python"],
   ["Java", "java"],
   ["JavaScript", "javascript", "js", "node.js", "nodejs"],
@@ -125,7 +125,7 @@ const VOCAB: string[][] = [
   ["RAG", "rag", "retrieval augmented generation"],
   ["Data analysis", "data analysis", "data analytics", "power bi", "tableau"],
   ["Excel", "excel", "ms excel"],
-  // RPA & workflow automation
+  ["#Programming & AI"],
   ["RPA", "rpa", "robotic process automation"],
   ["UiPath", "uipath"],
   ["Automation Anywhere", "automation anywhere"],
@@ -133,7 +133,7 @@ const VOCAB: string[][] = [
   ["n8n", "n8n"],
   ["Zapier", "zapier"],
   ["Make.com", "make.com", "integromat"],
-  // Non-technical
+  ["#Professional Skills"],
   ["Technical sales", "technical sales", "sales engineer", "pre-sales", "presales"],
   ["Business development", "business development"],
   ["Customer support", "customer support", "customer service", "technical support"],
@@ -152,6 +152,7 @@ const VOCAB: string[][] = [
 interface Entry {
   name: string;
   key: string;
+  group: string;
   patterns: RegExp[];
 }
 
@@ -159,11 +160,13 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 // Word boundary that treats + # . / & - as part of a skill ("C++", "P&ID", "node.js").
 const wordRe = (alias: string) => new RegExp(`(^|[^a-z0-9+#])${escape(alias)}(?=$|[^a-z0-9+#])`, "i");
 
-const ENTRIES: Entry[] = VOCAB.map(([name, ...aliases]) => ({
-  name,
-  key: name.toLowerCase(),
-  patterns: [name.toLowerCase(), ...aliases].map(wordRe),
-}));
+// Entries starting with "#" mark the group (resume section) for the entries after them.
+const ENTRIES: Entry[] = [];
+let group = "";
+for (const [name, ...aliases] of VOCAB) {
+  if (name.startsWith("#")) group = name.slice(1);
+  else ENTRIES.push({ name, key: name.toLowerCase(), group, patterns: [name.toLowerCase(), ...aliases].map(wordRe) });
+}
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -191,3 +194,9 @@ export function matchPercent(skills: { mustHave: string[]; niceToHave: string[] 
 }
 
 export const KNOWN_SKILL_NAMES = ENTRIES.map((e) => e.name);
+
+/** Resume section a skill belongs to, e.g. "PLC programming" -> "Robotics & Automation". */
+export function skillGroup(skill: string): string {
+  const keys = skillKeys(skill);
+  return ENTRIES.find((e) => keys.includes(e.key))?.group ?? "Tools & Other";
+}

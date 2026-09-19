@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { authedFetch, signInWithGoogle, signOutUser, useUser } from "@/lib/firebase/client";
-import { parseResume } from "@/lib/resume";
+import { parseResume, parseSections } from "@/lib/resume";
+import type { ResumeProfile } from "@/lib/resume-builder/model";
 import { CATEGORY_INFO, CATEGORY_LABELS, categoriesFor, JOB_TYPE_LABELS, JOB_TYPES, TRACK_LABELS, TRACKS, type Category, type JobType, type Track } from "@/lib/schema/enums";
+import { ResumeDownload } from "./ResumeDownload";
 
 interface Prefs {
   tracks: Track[];
@@ -23,8 +25,34 @@ interface Details {
   linkedin: string;
   github: string;
 }
+interface Project {
+  title: string;
+  tools: string;
+  points: string;
+}
+interface Experience {
+  role: string;
+  org: string;
+  period: string;
+  points: string;
+}
+interface Education {
+  title: string;
+  institution: string;
+  year: string;
+  score: string;
+}
+interface ResumeState {
+  summary: string;
+  projects: Project[];
+  experience: Experience[];
+  education: Education[];
+  certifications: string; // one per line
+  achievements: string; // one per line
+}
 interface Profile {
   details: Details;
+  resume: ResumeState;
   skills: string[];
   prefs: Prefs;
   minMatch: number;
@@ -32,11 +60,13 @@ interface Profile {
   telegramConnected: boolean;
   consentAt?: string;
 }
-type ServerProfile = Partial<Omit<Profile, "details">> & { details?: Record<string, unknown> };
+type ServerProfile = Partial<Omit<Profile, "details" | "resume">> & { details?: Record<string, unknown>; resume?: Record<string, unknown> };
 
 const EMPTY_DETAILS: Details = { fullName: "", phone: "", college: "", degree: "", branch: "", gradYear: "", city: "", linkedin: "", github: "" };
+const EMPTY_RESUME_STATE: ResumeState = { summary: "", projects: [], experience: [], education: [], certifications: "", achievements: "" };
 const EMPTY: Profile = {
   details: EMPTY_DETAILS,
+  resume: EMPTY_RESUME_STATE,
   skills: [],
   prefs: { tracks: [], categories: [], types: [], states: [] },
   minMatch: 40,
@@ -54,15 +84,70 @@ const DETAIL_FIELDS: [keyof Details, string, string][] = [
   ["linkedin", "LinkedIn URL", "https://www.linkedin.com/in/…"],
   ["github", "GitHub URL", "https://github.com/…"],
 ];
+const TEXTAREA = "w-full rounded-md border border-hairline-strong bg-surface p-3 text-[15px]";
 
 const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+const str = (v: unknown) => (v == null ? "" : String(v));
+const linesOf = (s: string) => s.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
 
-/** Stored profile (server shape) -> form state (all detail fields as strings). */
+function rows<T>(v: unknown, keys: (keyof T & string)[]): T[] {
+  return (Array.isArray(v) ? v : []).map((x: Record<string, unknown>) => Object.fromEntries(keys.map((k) => [k, str(x[k])])) as T);
+}
+
+/** Stored profile (server shape) -> form state (all text fields as strings). */
 function fromServer(p: ServerProfile): Profile {
   const details = Object.fromEntries(
-    (Object.keys(EMPTY_DETAILS) as (keyof Details)[]).map((k) => [k, p.details?.[k] == null ? "" : String(p.details[k])]),
+    (Object.keys(EMPTY_DETAILS) as (keyof Details)[]).map((k) => [k, str(p.details?.[k])]),
   ) as unknown as Details;
-  return { ...EMPTY, ...p, details };
+  const r = p.resume ?? {};
+  const resume: ResumeState = {
+    summary: str(r.summary),
+    projects: rows<Project>(r.projects, ["title", "tools", "points"]),
+    experience: rows<Experience>(r.experience, ["role", "org", "period", "points"]),
+    education: rows<Education>(r.education, ["title", "institution", "year", "score"]),
+    certifications: (Array.isArray(r.certifications) ? r.certifications : []).join("\n"),
+    achievements: (Array.isArray(r.achievements) ? r.achievements : []).join("\n"),
+  };
+  return { ...EMPTY, ...p, details, resume };
+}
+
+function trimAll<T extends object>(o: T): T {
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v])) as T;
+}
+
+/** Form state -> API body (drops empty rows and empty optional fields). */
+function resumeForApi(r: ResumeState) {
+  const opt = (s: string) => s || undefined;
+  return {
+    summary: r.summary.trim(),
+    projects: r.projects.map(trimAll).filter((x) => x.title && x.points).map((x) => ({ ...x, tools: opt(x.tools) })),
+    experience: r.experience.map(trimAll).filter((x) => x.role && x.org && x.points).map((x) => ({ ...x, period: opt(x.period) })),
+    education: r.education.map(trimAll).filter((x) => x.title && x.institution).map((x) => ({ ...x, year: opt(x.year), score: opt(x.score) })),
+    certifications: linesOf(r.certifications).slice(0, 15),
+    achievements: linesOf(r.achievements).slice(0, 15),
+  };
+}
+
+/** Form state -> resume generator input. */
+function toResumeProfile(p: Profile, email: string): ResumeProfile {
+  const d = p.details;
+  const opt = (s: string) => s.trim() || undefined;
+  return {
+    email,
+    skills: p.skills,
+    details: {
+      fullName: d.fullName,
+      phone: opt(d.phone),
+      college: opt(d.college),
+      degree: opt(d.degree),
+      branch: opt(d.branch),
+      gradYear: Number(d.gradYear) || undefined,
+      city: opt(d.city),
+      linkedin: opt(d.linkedin),
+      github: opt(d.github),
+    },
+    resume: { ...resumeForApi(p.resume), summary: opt(p.resume.summary) },
+  };
 }
 
 /** Reads a PDF in the browser, keeping line breaks; the file never leaves the device. */
@@ -96,8 +181,77 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
+/** Repeating rows (projects, internships, school education) with add / remove. */
+function RowsEditor<T extends object>({
+  label,
+  items,
+  empty,
+  max,
+  fields,
+  pointsPlaceholder,
+  onChange,
+}: {
+  label: string;
+  items: T[];
+  empty: T;
+  max: number;
+  fields: [keyof T & string, string, string][];
+  pointsPlaceholder?: string;
+  onChange: (items: T[]) => void;
+}) {
+  const update = (i: number, key: string, value: string) => onChange(items.map((r, j) => (j === i ? { ...r, [key]: value } : r)));
+  const hasPoints = "points" in empty;
+  return (
+    <div className="space-y-2">
+      <p className="label">{label}</p>
+      {items.map((row, i) => (
+        <div key={i} className="space-y-2 rounded-md border border-hairline p-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {fields.map(([key, name, example]) => (
+              <input
+                key={key}
+                aria-label={name}
+                placeholder={`${name} — e.g. ${example}`}
+                value={str((row as Record<string, unknown>)[key])}
+                onChange={(e) => update(i, key, e.target.value)}
+                className="input h-10 text-[15px]"
+              />
+            ))}
+          </div>
+          {hasPoints && (
+            <textarea
+              aria-label="What you did (one point per line)"
+              value={str((row as Record<string, unknown>).points)}
+              onChange={(e) => update(i, "points", e.target.value)}
+              rows={3}
+              placeholder={pointsPlaceholder}
+              className={TEXTAREA}
+            />
+          )}
+          <button type="button" className="text-sm text-muted underline" onClick={() => onChange(items.filter((_, j) => j !== i))}>
+            Remove
+          </button>
+        </div>
+      ))}
+      {items.length < max && (
+        <button type="button" className="btn-outline" onClick={() => onChange([...items, { ...empty }])}>
+          + Add
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ProfileSummary({ p, email, onEdit, onUpload }: { p: Profile; email: string; onEdit: () => void; onUpload: () => void }) {
   const d = p.details;
+  const r = resumeForApi(p.resume);
+  const filled = [
+    r.summary && "summary",
+    r.projects.length && `${r.projects.length} projects`,
+    r.experience.length && `${r.experience.length} internships/experience`,
+    r.certifications.length && `${r.certifications.length} certifications`,
+    r.achievements.length && `${r.achievements.length} achievements`,
+  ].filter(Boolean);
   const edu = [d.degree, d.branch, d.gradYear && `Class of ${d.gradYear}`].filter(Boolean).join(" · ");
   const wants = [
     p.prefs.tracks.map((t) => TRACK_LABELS[t]).join(", "),
@@ -134,6 +288,15 @@ function ProfileSummary({ p, email, onEdit, onUpload }: { p: Profile; email: str
         <span className="label mr-2">Alerts</span>
         {channels} · jobs matching ≥ {p.minMatch}% of your skills{wants.length ? ` · ${wants.join(" · ")}` : " · all jobs"}
       </p>
+      <div className="border-t border-hairline pt-4">
+        <p className="label">Your resume</p>
+        <p className="mb-3 mt-1 text-sm">
+          Made from your profile{filled.length ? ` (${filled.join(", ")})` : ""}.{" "}
+          {filled.length < 2 && "Add projects and internships in Edit profile for a stronger resume. "}
+          On any job page you can also download one tailored to that job.
+        </p>
+        <ResumeDownload profile={toResumeProfile(p, email)} />
+      </div>
     </section>
   );
 }
@@ -171,12 +334,14 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
 
   const set = (patch: Partial<Profile>) => setP((prev) => ({ ...prev, ...patch }));
   const setDetail = (k: keyof Details, v: string) => setP((prev) => ({ ...prev, details: { ...prev.details, [k]: v } }));
+  const setResume = (patch: Partial<ResumeState>) => setP((prev) => ({ ...prev, resume: { ...prev.resume, ...patch } }));
   const setPrefs = (patch: Partial<Prefs>) => setP((prev) => ({ ...prev, prefs: { ...prev.prefs, ...patch } }));
   const addSkills = (found: string[]) => setP((prev) => ({ ...prev, skills: [...new Set([...prev.skills, ...found])].slice(0, 80) }));
 
-  /** Fill details from the resume. New profile: fill everything found; saved profile: only empty fields. */
+  /** Fill the profile from resume text. New profile: fill everything found; saved profile: only empty fields. */
   function applyResume(text: string) {
     const r = parseResume(text, jobSkills);
+    const sec = parseSections(text);
     const found = Object.entries(r).filter(([k, v]) => k in EMPTY_DETAILS && v !== undefined && v !== "");
     setP((prev) => {
       const details = { ...prev.details };
@@ -184,12 +349,22 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
         const key = k as keyof Details;
         if (!saved || !details[key]) details[key] = String(v);
       }
-      return { ...prev, details, skills: [...new Set([...prev.skills, ...r.skills])].slice(0, 80) };
+      const cur = prev.resume;
+      const resume: ResumeState = {
+        summary: cur.summary || sec.summary || "",
+        projects: cur.projects.length ? cur.projects : sec.projects.map((x) => ({ title: x.title, tools: x.tools ?? "", points: x.points })),
+        experience: cur.experience.length ? cur.experience : sec.experience.map((x) => ({ role: x.role, org: x.org, period: x.period ?? "", points: x.points })),
+        education: cur.education.length ? cur.education : sec.education.map((x) => ({ title: x.title, institution: x.institution, year: x.year ?? "", score: x.score ?? "" })),
+        certifications: cur.certifications || sec.certifications.join("\n"),
+        achievements: cur.achievements || sec.achievements.join("\n"),
+      };
+      return { ...prev, details, resume, skills: [...new Set([...prev.skills, ...r.skills])].slice(0, 80) };
     });
     setEditing(true);
+    const sections = sec.projects.length + sec.experience.length;
     setMsg(
       r.skills.length || found.length
-        ? { ok: true, text: `Read your resume: ${found.length} details and ${r.skills.length} skills. Check everything below, then save.` }
+        ? { ok: true, text: `Read your resume: ${found.length} details, ${r.skills.length} skills${sections ? `, ${sections} projects/internships` : ""}. Check everything below, then save.` }
         : { ok: false, text: "Couldn't read much from this resume. Fill in the details below by hand." },
     );
   }
@@ -215,7 +390,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     setMsg(null);
     const res = await authedFetch(user, "/api/profile", {
       method: "PUT",
-      body: JSON.stringify({ details: p.details, skills: p.skills, prefs: p.prefs, minMatch: p.minMatch, channels: p.channels, consent }),
+      body: JSON.stringify({ details: p.details, resume: resumeForApi(p.resume), skills: p.skills, prefs: p.prefs, minMatch: p.minMatch, channels: p.channels, consent }),
     });
     const d = (await res.json()) as { profile?: ServerProfile & { skills?: string[] }; error?: string };
     setBusy(false);
@@ -228,7 +403,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     } catch {
       /* private mode */
     }
-    setMsg({ ok: true, text: "Profile saved. New matching jobs will be sent to you once a day." });
+    setMsg({ ok: true, text: "Profile saved. Download your resume below. New matching jobs will be sent to you once a day." });
   }
 
   async function telegram(action: "link" | "check") {
@@ -267,7 +442,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     return (
       <div className="card space-y-4 p-8 text-center">
         <h2 className="display text-3xl">Get jobs that match your resume</h2>
-        <p>Sign in, upload your resume, and we build your profile and message you when a new job fits your skills — by email or Telegram, once a day. Free.</p>
+        <p>Sign in, upload your resume (or create one here), and we build your profile, give you a downloadable resume, and message you when a new job fits your skills. Free.</p>
         <button
           type="button"
           className="btn-primary"
@@ -321,7 +496,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     );
   }
 
-  // Saved profile, not editing: show it with Edit / Update buttons.
+  // Saved profile, not editing: show it with Edit / Update / Download.
   if (saved && !editing) {
     return (
       <div className="space-y-5">
@@ -335,22 +510,23 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     );
   }
 
-  // New user who hasn't uploaded yet: start with the resume.
+  // New user: upload a resume, or create one from scratch.
   if (!saved && !editing) {
     return (
       <div className="space-y-5">
         {header}
         {hiddenFileInput}
         <section className="card space-y-4 p-8 text-center">
-          <h2 className="display text-3xl">Step 1: upload your resume</h2>
-          <p>We read your name, college, degree, branch, links and skills from it and build your profile. You can check and edit everything before saving.</p>
+          <h2 className="display text-3xl">Step 1: your resume</h2>
+          <p>Upload your resume and we read your name, college, degree, branch, links, skills and projects from it. You can check and edit everything before saving.</p>
           <p className="text-sm text-muted">Your resume is read on this device only. The file is never uploaded or stored.</p>
-          <button type="button" className="btn-primary" disabled={busy} onClick={() => fileInput.current?.click()}>
-            {busy ? "Reading…" : "Upload resume (PDF)"}
-          </button>
-          <div className="text-sm">
-            <button type="button" className="underline" onClick={() => setEditing(true)}>No PDF? Fill in by hand</button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button type="button" className="btn-primary" disabled={busy} onClick={() => fileInput.current?.click()}>
+              {busy ? "Reading…" : "Upload resume (PDF)"}
+            </button>
+            <button type="button" className="btn-outline" onClick={() => setEditing(true)}>No resume yet? Create one</button>
           </div>
+          <p className="text-sm">No resume? Enter your details and we make an ATS-friendly resume for you to download as PDF or Word.</p>
           {status}
         </section>
       </div>
@@ -359,26 +535,20 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
 
   const cats = categoriesFor(p.prefs.tracks.length === 1 ? p.prefs.tracks[0] : undefined);
 
-  // Edit form (new profile after reading the resume, or editing a saved one).
+  // Edit form (new profile, or editing a saved one).
   return (
     <div className="space-y-5">
       {header}
       {hiddenFileInput}
       {status}
 
-      <Section title="Your resume" hint="Upload again anytime to add new skills. Fields you already filled are never overwritten.">
+      <Section title="Your resume file" hint="Upload again anytime to add new skills. Fields you already filled are never overwritten.">
         <button type="button" className="btn-outline" disabled={busy} onClick={() => fileInput.current?.click()}>
           {busy ? "Reading…" : "Upload resume (PDF)"}
         </button>
         <details>
           <summary className="cursor-pointer text-sm text-ink">Or paste resume text (for Word files)</summary>
-          <textarea
-            value={pasted}
-            onChange={(e) => setPasted(e.target.value)}
-            rows={5}
-            className="mt-2 w-full rounded-md border border-hairline-strong bg-surface p-3 text-[15px]"
-            placeholder="Paste your resume here"
-          />
+          <textarea value={pasted} onChange={(e) => setPasted(e.target.value)} rows={5} className={`mt-2 ${TEXTAREA}`} placeholder="Paste your resume here" />
           <button type="button" className="btn-outline mt-2" onClick={() => applyResume(pasted)}>Read this text</button>
         </details>
       </Section>
@@ -403,7 +573,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
         </div>
       </Section>
 
-      <Section title="Your skills" hint="These are matched against every new job. Remove anything wrong, add anything missing.">
+      <Section title="Your skills" hint="Matched against every new job and shown on your resume. Remove anything wrong, add anything missing.">
         <div className="flex flex-wrap gap-2">
           {p.skills.map((s) => (
             <button key={s} type="button" onClick={() => set({ skills: p.skills.filter((x) => x !== s) })} className="chip-on" title="Remove">
@@ -424,6 +594,59 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
           <datalist id="skill-options">{skillOptions.map((s) => <option key={s} value={s} />)}</datalist>
           <button className="btn-outline">Add</button>
         </form>
+      </Section>
+
+      <Section title="Resume content" hint="Used to create your resume. Write only what you actually did — one point per line.">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="label">Summary (optional — we write one if empty)</span>
+          <textarea value={p.resume.summary} onChange={(e) => setResume({ summary: e.target.value })} rows={3} maxLength={700} className={TEXTAREA} placeholder="2-3 lines about you and the role you want" />
+        </label>
+        <RowsEditor<Project>
+          label="Projects"
+          items={p.resume.projects}
+          empty={{ title: "", tools: "", points: "" }}
+          max={8}
+          onChange={(projects) => setResume({ projects })}
+          fields={[
+            ["title", "Project title", "Pick-and-place robot arm"],
+            ["tools", "Tools / hardware", "ROS2, ESP32, SolidWorks"],
+          ]}
+          pointsPlaceholder={"What you did, one point per line, e.g.\nBuilt a 4-DOF arm that sorts parts by colour\nWrote inverse kinematics in Python"}
+        />
+        <RowsEditor<Experience>
+          label="Internships / experience / industrial training"
+          items={p.resume.experience}
+          empty={{ role: "", org: "", period: "", points: "" }}
+          max={6}
+          onChange={(experience) => setResume({ experience })}
+          fields={[
+            ["role", "Role", "Automation intern"],
+            ["org", "Company", "ABC Automation Pvt Ltd"],
+            ["period", "Dates", "Jun 2025 - Jul 2025"],
+          ]}
+          pointsPlaceholder={"What you did, one point per line, e.g.\nProgrammed a Siemens S7-1200 PLC for a conveyor line\nDesigned HMI screens in WinCC"}
+        />
+        <RowsEditor<Education>
+          label="Other education (school, diploma)"
+          items={p.resume.education}
+          empty={{ title: "", institution: "", year: "", score: "" }}
+          max={4}
+          onChange={(education) => setResume({ education })}
+          fields={[
+            ["title", "Course", "Higher Secondary (HSC)"],
+            ["institution", "School", "ABC Higher Secondary School"],
+            ["year", "Year", "2022"],
+            ["score", "Score", "92%"],
+          ]}
+        />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="label">Certifications (one per line)</span>
+          <textarea value={p.resume.certifications} onChange={(e) => setResume({ certifications: e.target.value })} rows={3} className={TEXTAREA} placeholder="NPTEL - Industrial Automation and Control" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="label">Achievements & activities (one per line)</span>
+          <textarea value={p.resume.achievements} onChange={(e) => setResume({ achievements: e.target.value })} rows={3} className={TEXTAREA} placeholder="2nd place, college robotics competition 2025" />
+        </label>
       </Section>
 
       <Section title="What jobs you want" hint="Leave a group empty to get everything in it.">
@@ -480,7 +703,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
         <label className="flex items-start gap-3 text-[15px]">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4" />
           <span>
-            I agree that my profile details and skills are stored to send me job alerts, as explained in the{" "}
+            I agree that my profile details and skills are stored to create my resume and send me job alerts, as explained in the{" "}
             <Link href="/privacy" className="underline">privacy notice</Link>. I can edit or delete them anytime.
           </span>
         </label>

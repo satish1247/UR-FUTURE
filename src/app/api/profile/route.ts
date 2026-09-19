@@ -9,7 +9,7 @@ const unauthorized = () => Response.json({ error: "Please sign in again." }, { s
 /** Only what the profile page needs; never the Telegram link code. */
 function view(p: UserProfile | null) {
   if (!p) return null;
-  return { details: p.details, email: p.email, skills: p.skills, prefs: p.prefs, minMatch: p.minMatch, channels: p.channels, telegramConnected: !!p.telegramChatId, consentAt: p.consentAt };
+  return { details: p.details, resume: p.resume, email: p.email, skills: p.skills, prefs: p.prefs, minMatch: p.minMatch, channels: p.channels, telegramConnected: !!p.telegramChatId, consentAt: p.consentAt };
 }
 
 export async function GET(req: Request) {

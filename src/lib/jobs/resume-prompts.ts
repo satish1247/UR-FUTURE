@@ -4,7 +4,7 @@ export const PLACEHOLDER_CREATE = "[MY DETAILS]";
 export const PLACEHOLDER_UPGRADE = "[PASTE YOUR CURRENT RESUME HERE]";
 export const PLACEHOLDER_MISSING = "[TO FILL]";
 
-type PromptJob = Pick<Job, "title" | "company" | "track" | "type" | "summary" | "skills" | "requirements" | "responsibilities" | "experience">;
+export type PromptJob = Pick<Job, "title" | "company" | "track" | "type" | "summary" | "skills" | "requirements" | "responsibilities" | "experience">;
 
 const ATS_FORMAT = `ATS FORMAT RULES (follow all of them):
 - One page, single column, plain text or simple Markdown. No tables, columns, text boxes, icons, images, photos, graphics or skill bars.
@@ -39,7 +39,38 @@ const focusFor = (job: PromptJob) =>
     ? "Lead with customer-facing strengths (explaining technical products, demos, communication, coordination) backed by what I actually did, then technical basics."
     : "Lead with hands-on projects and internships: what I built, the hardware/software/tools used, and the measurable result.";
 
-export function createResumePrompt(job: PromptJob): string {
+/** profileText: the student's saved profile as plain text; layout: a design brief so resumes differ. */
+export interface PromptOptions {
+  profileText?: string;
+  layout?: string;
+}
+
+const layoutBlock = (layout?: string) => (layout ? `
+
+LAYOUT: ${layout}` : "");
+
+export function createResumePrompt(job: PromptJob, opts: PromptOptions = {}): string {
+  if (opts.profileText) {
+    return `You are an expert ATS resume writer for fresher engineering roles in India. Write my resume for the job below using my details.
+
+${jobBlock(job)}
+
+MY DETAILS:
+${opts.profileText}
+
+STEP 1 - Check my details against the job. If something important is missing (for example the result of a project, or a number), ask me up to 5 short questions and wait for my answers. If nothing important is missing, go straight to step 2.
+
+STEP 2 - WRITE THE RESUME for this exact job. ${focusFor(job)} Put the most job-relevant project first. Write a 2-3 line Summary aimed at this role and company. Use the job's keywords wherever my details truthfully support them.${layoutBlock(opts.layout)}
+
+${ATS_FORMAT}
+
+${HONESTY}
+
+STEP 3 - AFTER THE RESUME, give me:
+- Keyword match: which ATS keywords above are covered and which are missing.
+- Gaps to close: for each missing must-have skill, one small project I could finish in 1-2 weeks to prove it.
+- A 3-line cover note I can paste into the application form.`;
+  }
   return `You are an expert ATS resume writer for fresher engineering roles in India. Help me build a resume for the job below, from scratch.
 
 ${jobBlock(job)}
@@ -53,7 +84,7 @@ STEP 1 - INTERVIEW ME FIRST. Do not write the resume yet. Ask me short questions
 6) Certifications, competitions, papers, clubs, positions of responsibility
 Here is what I can share to start: ${PLACEHOLDER_CREATE}
 
-STEP 2 - WRITE THE RESUME for this exact job. ${focusFor(job)} Put the most job-relevant project first. Write a 2-3 line Summary aimed at this role and company.
+STEP 2 - WRITE THE RESUME for this exact job. ${focusFor(job)} Put the most job-relevant project first. Write a 2-3 line Summary aimed at this role and company.${layoutBlock(opts.layout)}
 
 ${ATS_FORMAT}
 
@@ -65,13 +96,13 @@ STEP 3 - AFTER THE RESUME, give me:
 - A 3-line cover note I can paste into the application form.`;
 }
 
-export function upgradeResumePrompt(job: PromptJob): string {
+export function upgradeResumePrompt(job: PromptJob, opts: PromptOptions = {}): string {
   return `You are an expert ATS resume reviewer and recruiter for fresher engineering roles in India. Review and upgrade my existing resume for the job below.
 
 ${jobBlock(job)}
 
 MY CURRENT RESUME:
-${PLACEHOLDER_UPGRADE}
+${opts.profileText ?? PLACEHOLDER_UPGRADE}
 
 STEP 1 - ATS SCORE. Estimate how well my resume matches this job out of 100 and explain the score in 3 lines (keywords, relevance, formatting).
 
@@ -87,7 +118,7 @@ STEP 2 - RED FLAGS. List every problem you find, most serious first, and say why
 - Longer than one page, walls of text, or too little content
 - Claims that look exaggerated or unverifiable
 
-STEP 3 - UPGRADED RESUME. Rewrite the full resume tailored to this job. ${focusFor(job)} Reorder sections and projects so the most relevant evidence comes first. Rewrite weak bullets as action + tools + result.
+STEP 3 - UPGRADED RESUME. Rewrite the full resume tailored to this job. ${focusFor(job)} Reorder sections and projects so the most relevant evidence comes first. Rewrite weak bullets as action + tools + result.${layoutBlock(opts.layout)}
 
 ${ATS_FORMAT}
 

@@ -3,11 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { CompanyLogo, formatSalary, JobCard, place } from "@/components/JobCard";
-import { ResumePrompts } from "@/components/ResumePrompts";
+import { JobResumeTools } from "@/components/JobResumeTools";
 import { ApplyButton, LearningPath, TrackPanel } from "@/components/Tracking";
 import { toCard } from "@/lib/jobs/filter";
 import { getActiveJobs, getJob } from "@/lib/jobs/repo";
-import { createResumePrompt, upgradeResumePrompt } from "@/lib/jobs/resume-prompts";
 import { CATEGORY_LABELS, JOB_TYPE_LABELS, TRACK_LABELS, WORK_MODE_LABELS } from "@/lib/schema/enums";
 
 export const revalidate = 60;
@@ -128,8 +127,8 @@ export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
         <LearningPath job={ref} path={job.help.learningPath} />
       </Section>
 
-      <Section title="Resume prompt">
-        <ResumePrompts create={createResumePrompt(job)} upgrade={upgradeResumePrompt(job)} />
+      <Section title="Your resume">
+        <JobResumeTools job={{ title: job.title, company: { name: job.company.name }, track: job.track, type: job.type, summary: job.summary, skills: job.skills, requirements: job.requirements, responsibilities: job.responsibilities, experience: job.experience }} />
       </Section>
 
       <footer className="border-t border-hairline pt-6 text-sm text-muted">

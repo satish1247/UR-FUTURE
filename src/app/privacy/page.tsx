@@ -12,8 +12,8 @@ export default function PrivacyPage() {
       <p>{SITE_NAME} is a free student project. Browsing jobs needs no account and stores nothing about you on our side.</p>
       <h2 className="text-lg font-medium text-ink">If you turn on job alerts</h2>
       <ul className="list-disc space-y-1 pl-5">
-        <li><b>Stored:</b> your email from Google sign-in; the profile you confirm (name, phone, college, degree, branch, graduation year, city, LinkedIn/GitHub links); your skills, job preferences and alert settings; and your Telegram chat ID if you connect Telegram.</li>
-        <li><b>Not stored:</b> your resume file or its full text. It is read on your own device only to fill in your profile, which you check before saving.</li>
+        <li><b>Stored:</b> your email from Google sign-in; the profile you confirm (name, phone, college, degree, branch, graduation year, city, LinkedIn/GitHub links, and the resume content you add: summary, projects, internships, school education, certifications, achievements); your skills, job preferences and alert settings; and your Telegram chat ID if you connect Telegram.</li>
+        <li><b>Not stored:</b> your resume file or its full text. It is read on your own device only to fill in your profile, which you check before saving. Resumes you download are created in your browser from your profile.</li>
         <li><b>Why:</b> only to show you your profile and send you new jobs that match your skills, at most once a day. Your profile is not shown to anyone else.</li>
         <li><b>Who processes it:</b> Google Firebase (database and sign-in), Brevo (sending emails), Telegram (if you connect it), Vercel (hosting). We never sell or share your data.</li>
       </ul>

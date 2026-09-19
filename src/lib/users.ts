@@ -27,8 +27,8 @@ export async function saveProfile(user: { uid: string; email: string; name: stri
   const ref = db().collection(USERS).doc(user.uid);
   const now = new Date().toISOString();
   const prev = (await ref.get()).data() as UserProfile | undefined;
-  const { details, skills, prefs, minMatch, channels } = input;
-  const rest = { details, skills, prefs, minMatch, channels };
+  const { details, resume, skills, prefs, minMatch, channels } = input;
+  const rest = { details, resume, skills, prefs, minMatch, channels };
   const profile: UserProfile = {
     ...prev,
     ...rest,
