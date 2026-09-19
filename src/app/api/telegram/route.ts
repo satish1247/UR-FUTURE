@@ -1,3 +1,4 @@
+import { TELEGRAM_BOT_USERNAME } from "@/config/public";
 import { hitRateLimit } from "@/lib/jobs/repo";
 import { pollTelegram } from "@/lib/notify";
 import { getProfile, newTelegramLinkCode, userFromRequest } from "@/lib/users";
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
   const profile = await getProfile(user.uid);
   if (!profile) return Response.json({ error: "Save your profile first." }, { status: 400 });
   const { action } = (await req.json().catch(() => ({}))) as { action?: string };
-  const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+  const bot = TELEGRAM_BOT_USERNAME;
   if (action === "link") {
     if (!bot) return Response.json({ error: "Telegram is not set up on this site." }, { status: 503 });
     const code = await newTelegramLinkCode(user.uid);

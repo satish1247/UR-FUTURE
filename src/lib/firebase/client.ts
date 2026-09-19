@@ -4,16 +4,12 @@
 import { getApps, initializeApp } from "firebase/app";
 import { deleteUser, GoogleAuthProvider, getAuth, onAuthStateChanged, reauthenticateWithPopup, signInWithPopup, signOut, type User } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { FIREBASE_WEB_CONFIG } from "@/config/public";
 
 function auth() {
   const app =
     getApps()[0] ??
-    initializeApp({
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    });
+    initializeApp(FIREBASE_WEB_CONFIG);
   return getAuth(app);
 }
 
