@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Filters } from "@/components/Filters";
 import { JobCard } from "@/components/JobCard";
 import { JobList } from "@/components/JobList";
+import { SignupCta } from "@/components/SignupCta";
 import { CLOSING_SOON_DAYS, PAGE_SIZE, SHOW_HERO_ORB, SITE_TAGLINE } from "@/config/site";
 import { categoryCounts, closingSoon, filterJobs, newToday, parseFilters, sortJobs, toCard } from "@/lib/jobs/filter";
 import { getActiveJobs } from "@/lib/jobs/repo";
@@ -32,6 +33,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <span className="ml-1 font-medium text-ink">{newToday(all, today)} new today · {all.length} open now.</span>
         </p>
       </section>
+
+      {!isFiltered && <SignupCta />}
 
       <Filters f={f} states={states} counts={counts} />
 

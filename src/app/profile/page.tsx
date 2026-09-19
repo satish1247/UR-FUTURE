@@ -4,7 +4,7 @@ import { getActiveJobs } from "@/lib/jobs/repo";
 import { KNOWN_SKILL_NAMES } from "@/lib/skills";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Job alerts", robots: { index: false } };
+export const metadata: Metadata = { title: "Your profile", robots: { index: false } };
 
 export default async function ProfilePage() {
   const jobs = await getActiveJobs().catch(() => []);
@@ -13,9 +13,13 @@ export default async function ProfilePage() {
   const states = [...new Set(jobs.map((j) => j.location.state).filter((s): s is string => !!s))].sort();
   return (
     <div className="container-page max-w-3xl py-12">
-      <p className="label">Job alerts</p>
-      <h1 className="display mt-2 text-4xl">Jobs that match your resume</h1>
-      <p className="mb-8 mt-3">Add your resume once. Every day, new jobs that fit your skills are sent to you by email or Telegram.</p>
+      <p className="label">Your profile</p>
+      <h1 className="display mt-2 text-4xl">Your free UR Future profile</h1>
+      <ol className="mb-8 mt-4 grid gap-2 text-[15px] sm:grid-cols-3">
+        <li className="card p-3"><b className="text-ink">1. Sign up</b> with Google — one tap.</li>
+        <li className="card p-3"><b className="text-ink">2. Add your resume</b> — upload it, or enter your details and we make one.</li>
+        <li className="card p-3"><b className="text-ink">3. Get matched jobs</b> — by email or Telegram, plus resumes to download.</li>
+      </ol>
       <ProfileForm skillOptions={skillOptions} jobSkills={jobSkills} states={states} />
     </div>
   );
