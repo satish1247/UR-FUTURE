@@ -79,3 +79,15 @@ describe("profile and unsubscribe", () => {
     expect(verifyUnsubscribe("user-1", "bad")).toBe(false);
   });
 });
+
+describe("sign-in token check", () => {
+  it("rejects missing, garbage and wrongly signed tokens", async () => {
+    process.env.FIREBASE_PROJECT_ID = "ur-future-2026";
+    const { verifyIdToken } = await import("@/lib/firebase/verify-token");
+    expect(await verifyIdToken("not-a-token")).toBeNull();
+    const fake = [{ alg: "RS256", kid: "x" }, { sub: "u1", email: "a@b.c", aud: "ur-future-2026", iss: "https://securetoken.google.com/ur-future-2026", exp: 9999999999 }]
+      .map((o) => Buffer.from(JSON.stringify(o)).toString("base64url"))
+      .join(".") + ".c2lnbmF0dXJl";
+    expect(await verifyIdToken(fake)).toBeNull();
+  });
+});

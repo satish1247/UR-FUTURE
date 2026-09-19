@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { authedFetch, signInWithGoogle, signOutUser, useUser } from "@/lib/firebase/client";
+import { authedFetch, deleteSignedInUser, signInWithGoogle, signOutUser, useUser } from "@/lib/firebase/client";
 import { parseResume, parseSections } from "@/lib/resume";
 import type { ResumeProfile } from "@/lib/resume-builder/model";
 import { CATEGORY_INFO, CATEGORY_LABELS, categoriesFor, JOB_TYPE_LABELS, JOB_TYPES, TRACK_LABELS, TRACKS, type Category, type JobType, type Track } from "@/lib/schema/enums";
@@ -429,7 +429,7 @@ export function ProfileForm({ skillOptions, jobSkills, states }: { skillOptions:
     if (!user || !confirm("Delete your profile, skills and sign-in account? This cannot be undone.")) return;
     const res = await authedFetch(user, "/api/profile", { method: "DELETE" });
     if (res.ok) {
-      await signOutUser();
+      await deleteSignedInUser().catch(() => signOutUser());
       setP(EMPTY);
       setSaved(false);
       setMsg({ ok: true, text: "All your data was deleted." });

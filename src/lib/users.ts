@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { adminAuth, db } from "@/lib/firebase/admin";
+import { db } from "@/lib/firebase/admin";
+import { verifyIdToken } from "@/lib/firebase/verify-token";
 import type { ProfileInput, UserProfile } from "@/lib/schema/user";
 
 const USERS = "users";
@@ -10,9 +11,9 @@ export async function userFromRequest(req: Request): Promise<{ uid: string; emai
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
   try {
-    const t = await adminAuth().verifyIdToken(token);
-    if (!t.email || !t.email_verified) return null;
-    return { uid: t.uid, email: t.email, name: (t.name as string | undefined) ?? t.email.split("@")[0] };
+    const t = await verifyIdToken(token);
+    if (!t || !t.emailVerified) return null;
+    return { uid: t.uid, email: t.email, name: t.name ?? t.email.split("@")[0] };
   } catch {
     return null;
   }
@@ -47,10 +48,9 @@ export async function saveProfile(user: { uid: string; email: string; name: stri
   return profile;
 }
 
-/** "Delete my data": removes the profile and the sign-in account. */
+/** "Delete my data": removes the profile. The browser then deletes the sign-in account itself. */
 export async function deleteProfile(uid: string): Promise<void> {
   await db().collection(USERS).doc(uid).delete();
-  await adminAuth().deleteUser(uid).catch(() => undefined);
 }
 
 export async function updateProfile(uid: string, patch: Partial<UserProfile>): Promise<void> {
