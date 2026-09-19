@@ -1,13 +1,12 @@
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
-import { SITE_NAME } from "@/config/site";
+import { SITE_NAME, siteUrl } from "@/config/site";
 import { renderEmail, renderTelegram, selectDigestJobs } from "@/lib/digest";
 import { db } from "@/lib/firebase/admin";
 import type { Job } from "@/lib/schema/job";
 import { findByTelegramChat, findByTelegramCode, listAlertUsers, unsubscribeToken, updateProfile } from "@/lib/users";
 
 const EMAILS_PER_DAY = 290; // Brevo free plan: 300/day
-const siteUrl = () => (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 export async function sendEmail(
   to: { email: string; name: string },

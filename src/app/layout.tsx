@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_DESCRIPTION, SITE_NAME } from "@/config/site";
+import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/config/site";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -10,7 +10,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["40
 const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], weight: ["300"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(siteUrl()),
   title: { default: `${SITE_NAME} — R&A jobs and internships`, template: `%s · ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   openGraph: { siteName: SITE_NAME, type: "website" },
