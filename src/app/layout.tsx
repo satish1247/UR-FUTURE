@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1">{children}</main>
         <footer className="border-t border-hairline">
           <div className="container-page flex flex-col gap-2 py-10 text-[15px] sm:flex-row sm:justify-between">
-            <p>{SITE_NAME} is free for Robotics & Automation students. We link to official company pages only.</p>
+            <p>{SITE_NAME} is free · Robotics & Automation careers in India · Apply links go to the company or job portal.</p>
             <div className="flex gap-4">
               <Link href="/about" className="text-ink underline-offset-4 hover:underline sm:hidden">About</Link>
               <Link href="/privacy" className="text-ink underline-offset-4 hover:underline">Privacy</Link>

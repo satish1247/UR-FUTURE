@@ -6,8 +6,8 @@ import { SITE_NAME } from "@/config/site";
 export const metadata: Metadata = { title: "About" };
 
 const HOW_IT_WORKS: [string, string][] = [
-  ["Updated every day", "An AI assistant checks company career pages, public job boards, job portals and government apprenticeship portals, and adds new fresher-friendly roles."],
-  ["Official links only", "Every Apply button opens the company's own page or the original public listing. We never ask for your details."],
+  ["Updated every day", "An AI assistant checks company career pages, LinkedIn, Naukri and other job portals, and government apprenticeship portals, and adds new fresher-friendly roles."],
+  ["Real listings only", "Every Apply button opens the company's own page or the original listing on the job portal. We never ask for money."],
   ["Closed jobs disappear", "Jobs past their deadline or with a dead link are marked closed and removed automatically a week later."],
   ["Learn what they ask for", "Each job lists must-have and stand-out skills, a free learning path and tips to close the gap."],
   ["ATS resume prompts", "Copy a prompt into any AI chat to build a new ATS-friendly resume, or to find the red flags in yours and upgrade it for that exact job."],
@@ -21,10 +21,9 @@ export default function AboutPage() {
       <section>
         <Image src="/logo.png" alt={SITE_NAME + " logo"} width={160} height={160} className="mb-6" />
         <p className="label">About</p>
-        <h1 className="display mt-3 text-4xl sm:text-5xl">A job board made for Robotics & Automation students</h1>
+        <h1 className="display mt-3 text-4xl sm:text-5xl">A job board for Robotics & Automation careers</h1>
         <p className="mt-4 text-base">
-          {SITE_NAME} collects fresher jobs, internships, apprenticeships and trainee roles across India for Robotics & Automation
-          students — core hardware roles, software roles, and non-technical roles like technical sales and support — in one place, for free.
+          {SITE_NAME} collects fresher jobs, internships, apprenticeships and trainee roles across India in the Robotics & Automation domain — core hardware roles, software roles, and non-technical roles like technical sales and support — in one place, for free.
         </p>
       </section>
 

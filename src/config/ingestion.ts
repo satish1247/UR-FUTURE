@@ -88,6 +88,24 @@ export const INGESTION_CONFIG: IngestionConfig = {
   locations: ["India", "Remote (India)", "Bengaluru", "Pune", "Chennai", "Hyderabad", "Delhi NCR", "Mumbai", "Coimbatore", "Ahmedabad", "Vadodara", "Kolkata", "Kochi", "Visakhapatnam"],
   maxMinYears: 2,
   perRunCap: 40,
-  // Login-walled or scraping-forbidden. Never use as sourceUrl/applyUrl (web search results may still point you to the official posting).
-  blockedHosts: ["linkedin.com", "naukri.com", "glassdoor.co.in", "glassdoor.com", "shine.com", "timesjobs.com"],
+  // Job pages that need a login just to view. Never use as sourceUrl/applyUrl.
+  blockedHosts: ["glassdoor.co.in", "glassdoor.com"],
+  // Job portals scraped through the Apify connector. About $0.40-0.70 per 1,000 results, so
+  // ~250 results/day stays inside Apify's free $5/month. Run once per keyword group; merge and dedupe.
+  apify: [
+    {
+      platform: "Naukri",
+      actor: "valig/naukri-jobs-scraper",
+      maxResultsPerRun: 25,
+      input: { keywords: "<keyword group>", location: "India", experience: 0, jobAge: "3", sort: "date", limit: 25 },
+      note: "Run for the 6 most important keyword groups (PLC, robotics, embedded, automation trainee, computer vision, sales engineer automation). Keep jobs asking at most maxMinYears.",
+    },
+    {
+      platform: "LinkedIn",
+      actor: "cheap_scraper/linkedin-job-scraper",
+      maxResultsPerRun: 50,
+      input: { keyword: ["<keyword group>"], location: "India", publishedAt: "r86400", experienceLevel: ["1", "2"], maxItems: 50 },
+      note: "Pass 3-4 keyword groups in one run. Experience levels 1-2 = internship / entry level. Prefer the company's own apply link when the job has one.",
+    },
+  ],
 };

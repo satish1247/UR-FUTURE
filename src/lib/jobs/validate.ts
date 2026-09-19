@@ -2,8 +2,8 @@ import type { z } from "zod";
 import { CATEGORY_INFO } from "@/lib/schema/enums";
 import { jobInputSchema, type JobInput } from "@/lib/schema/job";
 
-// Login-walled or scraping-forbidden portals. Never accepted as source or apply link.
-export const BLOCKED_HOSTS = ["linkedin.com", "naukri.com", "glassdoor.com", "glassdoor.co.in"];
+// Sites whose job pages need a login just to view. Never accepted as source or apply link.
+export const BLOCKED_HOSTS = ["glassdoor.com", "glassdoor.co.in"];
 
 export type ValidationResult =
   | { ok: true; job: JobInput }

@@ -36,7 +36,7 @@ describe("validator", () => {
     ["HTML in text", (j: any) => (j.title = "<b>Engineer</b>"), "title: must be plain text"],
     ["5+ years", (j: any) => (j.experience.minYears = 5), "out of scope"],
     ["past deadline", (j: any) => (j.deadline = "2026-01-01"), "has already passed"],
-    ["LinkedIn apply link", (j: any) => (j.applyUrl = "https://www.linkedin.com/jobs/view/1"), "login-walled"],
+    ["login-only job site", (j: any) => (j.applyUrl = "https://www.glassdoor.co.in/job-listing/1"), "login"],
   ])("rejects %s with a readable reason", (_name, mutate, expected) => {
     const job = good();
     mutate(job);

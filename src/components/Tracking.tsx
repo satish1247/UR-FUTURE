@@ -4,13 +4,30 @@ import Link from "next/link";
 import type { LearningStep } from "@/lib/schema/job";
 import { markApplied, progress, setStatus, toggleStep, TRACK_STATUS_LABELS, TRACK_STATUSES, untrack, useTracker, type JobRef, type TrackStatus } from "@/lib/tracker";
 
+const PORTALS: [RegExp, string][] = [
+  [/(^|\.)linkedin\.com$/, "LinkedIn"],
+  [/(^|\.)naukri\.com$/, "Naukri"],
+  [/(^|\.)indeed\.com$/, "Indeed"],
+  [/(^|\.)internshala\.com$/, "Internshala"],
+];
+
+function portalName(url: string): string | undefined {
+  try {
+    const host = new URL(url).hostname;
+    return PORTALS.find(([re]) => re.test(host))?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
 export function ApplyButton({ job, url }: { job: JobRef; url: string }) {
+  const portal = portalName(url);
   return (
     <div className="fixed inset-x-0 bottom-0 z-10 border-t border-hairline bg-canvas/95 p-3 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0">
       <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => markApplied(job)} className="btn-primary w-full sm:w-auto">
-        Apply on company site ↗
+        {portal ? `Apply on ${portal} ↗` : "Apply on company site ↗"}
       </a>
-      <p className="mt-1.5 text-center text-xs text-muted sm:text-left">Opens the official page. We add it to My jobs as “Applied”.</p>
+      <p className="mt-1.5 text-center text-xs text-muted sm:text-left">{portal ? `Opens the listing on ${portal} (you may need a free ${portal} account to apply).` : "Opens the official page."} We add it to My jobs as “Applied”.</p>
     </div>
   );
 }

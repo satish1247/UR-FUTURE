@@ -29,6 +29,18 @@ export const ingestionConfigSchema = z.object({
   maxMinYears: z.number().int().min(0).max(4).default(2),
   perRunCap: z.number().int().min(1).max(100).default(40),
   blockedHosts: list(plainText(120), 0, 50).default([]),
+  /** Job-portal scrapers run through the Apify connector (pay-per-result; keep within the free $5/month). */
+  apify: list(
+    z.object({
+      platform: plainText(40),
+      actor: z.string().regex(/^[\w-]+\/[\w-]+$/,"must be username/actor-name"),
+      maxResultsPerRun: z.number().int().min(1).max(500),
+      input: z.record(z.string(), z.unknown()),
+      note: plainText(300),
+    }),
+    0,
+    10,
+  ).default([]),
 });
 export type IngestionConfig = z.infer<typeof ingestionConfigSchema>;
 
