@@ -27,7 +27,8 @@ const call = async (c: Client, name: string, args: Record<string, unknown>) =>
 
 describe("MCP server", () => {
   let client: Client;
-  const job = { ...structuredClone(SAMPLE_JOBS[1]), applyUrl: `https://example.com/mcp-test-${Date.now()}` };
+  // SAMPLE_JOBS[2] is in Chennai, inside the covered regions.
+  const job = { ...structuredClone(SAMPLE_JOBS[2]), applyUrl: `https://example.com/mcp-test-${Date.now()}` };
 
   beforeAll(async () => {
     expect(process.env.FIRESTORE_EMULATOR_HOST, "run via npm run test:emu").toBeTruthy();
@@ -65,6 +66,12 @@ describe("MCP server", () => {
     expect(bad.result).toBe("rejected");
     expect(bad.errors.join("\n")).toMatch(/track/);
     expect(bad.errors.join("\n")).toMatch(/https/);
+  });
+
+  it("rejects on-site jobs outside the covered regions", async () => {
+    const out = await call(client, "upsert_job", { job: { ...job, location: { city: "Pune", state: "Maharashtra", country: "India", workMode: "onsite" } } });
+    expect(out.result).toBe("rejected");
+    expect(out.errors.join(" ")).toMatch(/Tamil Nadu/);
   });
 
   it("expires a job", async () => {

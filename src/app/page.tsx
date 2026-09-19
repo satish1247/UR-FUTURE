@@ -26,10 +26,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {SHOW_HERO_ORB && (
           <div aria-hidden className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-orb-mint opacity-40 blur-3xl sm:h-96 sm:w-96" />
         )}
-        <p className="label relative">Robotics & Automation · India</p>
+        <p className="label relative">All engineering branches · South India</p>
         <h1 className="display relative mt-3 max-w-3xl text-4xl sm:text-6xl">{SITE_TAGLINE}</h1>
         <p className="relative mt-4 max-w-2xl text-base">
-          Core, software and non-technical roles for freshers — each with the skills to learn, free resources and a ready resume prompt.
+          Core engineering, software and non-technical roles in Chennai, Bengaluru, Kerala, Andhra Pradesh and Puducherry — each with the skills to learn, free resources and a ready resume prompt.
           <span className="ml-1 font-medium text-ink">{newToday(all, today)} new today · {all.length} open now.</span>
         </p>
       </section>

@@ -25,6 +25,8 @@ export const ingestionConfigSchema = z.object({
     0,
     300,
   ),
+  /** Only jobs in these states count; a non-empty `cities` limits a state to those cities. */
+  regions: list(z.object({ state: plainText(60), cities: list(plainText(60), 0, 20) }), 0, 40).default([]),
   locations: list(plainText(80), 1, 60),
   maxMinYears: z.number().int().min(0).max(4).default(2),
   perRunCap: z.number().int().min(1).max(100).default(40),

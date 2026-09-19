@@ -5,7 +5,7 @@ import { INGESTION_CONFIG } from "@/config/ingestion";
 import { saveLogo } from "@/lib/logo";
 import { dedupeKey } from "@/lib/jobs/dedupe";
 import { expireJob, JOB_ID, listRecentJobs, logRun, refreshSite, upsertJob } from "@/lib/jobs/repo";
-import { validateJobInput } from "@/lib/jobs/validate";
+import { regionError, validateJobInput } from "@/lib/jobs/validate";
 import { ingestRunSchema } from "@/lib/schema/config";
 import { CATEGORY_INFO } from "@/lib/schema/enums";
 
@@ -58,6 +58,8 @@ export function buildMcpServer(): McpServer {
       if (checked.job.experience.minYears > INGESTION_CONFIG.maxMinYears) {
         return reply({ result: "rejected", errors: [`experience.minYears: at most ${INGESTION_CONFIG.maxMinYears} years allowed`] }, true);
       }
+      const outside = regionError(checked.job.location, INGESTION_CONFIG.regions);
+      if (outside) return reply({ result: "rejected", errors: [outside] }, true);
       const id = dedupeKey(checked.job);
       const logoUrl = await saveLogo(checked.job.company.logoUrl, id.slice(0, 24));
       const { result } = await upsertJob({ ...checked.job, company: { ...checked.job.company, logoUrl } });

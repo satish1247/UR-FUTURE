@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { authedFetch, deleteSignedInUser, signInWithGoogle, signOutUser, useUser } from "@/lib/firebase/client";
 import { parseResume, parseSections } from "@/lib/resume";
 import type { ResumeProfile } from "@/lib/resume-builder/model";
-import { CATEGORY_INFO, CATEGORY_LABELS, categoriesFor, JOB_TYPE_LABELS, JOB_TYPES, TRACK_LABELS, TRACKS, type Category, type JobType, type Track } from "@/lib/schema/enums";
+import { CATEGORY_INFO, CATEGORY_LABELS, categoriesFor, normalizeCategory, JOB_TYPE_LABELS, JOB_TYPES, TRACK_LABELS, TRACKS, type Category, type JobType, type Track } from "@/lib/schema/enums";
 import { ResumeDownload } from "./ResumeDownload";
 
 interface Prefs {
@@ -108,7 +108,8 @@ function fromServer(p: ServerProfile): Profile {
     certifications: (Array.isArray(r.certifications) ? r.certifications : []).join("\n"),
     achievements: (Array.isArray(r.achievements) ? r.achievements : []).join("\n"),
   };
-  return { ...EMPTY, ...p, details, resume };
+  const prefs = p.prefs ? { ...p.prefs, categories: [...new Set(p.prefs.categories.map(normalizeCategory))] } : EMPTY.prefs;
+  return { ...EMPTY, ...p, prefs, details, resume };
 }
 
 function trimAll<T extends object>(o: T): T {

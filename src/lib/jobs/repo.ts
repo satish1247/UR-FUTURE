@@ -2,10 +2,14 @@ import "server-only";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { db } from "@/lib/firebase/admin";
 import type { IngestRun } from "@/lib/schema/config";
+import { normalizeCategory } from "@/lib/schema/enums";
 import type { Job, JobInput } from "@/lib/schema/job";
 import { dedupeKey } from "./dedupe";
 
 const JOBS = "jobs";
+
+/** Stored doc -> Job, mapping categories from older versions of the site. */
+const toJob = (data: FirebaseFirestore.DocumentData): Job => ({ ...(data as Job), category: normalizeCategory(String(data.category)) });
 // The whole active set is cached and filtered in memory; fine to a few thousand
 // jobs. Past that, move filters into indexed Firestore queries.
 const MAX_ACTIVE = 2000;
@@ -14,7 +18,7 @@ export const JOB_ID = /^[a-f0-9]{64}$/;
 export const getActiveJobs = unstable_cache(
   async (): Promise<Job[]> => {
     const snap = await db().collection(JOBS).where("status", "==", "active").limit(MAX_ACTIVE).get();
-    return snap.docs.map((d) => d.data() as Job);
+    return snap.docs.map((d) => toJob(d.data()));
   },
   ["active-jobs"],
   { tags: [JOBS], revalidate: 300 },
@@ -23,7 +27,7 @@ export const getActiveJobs = unstable_cache(
 export async function getJob(id: string): Promise<Job | null> {
   if (!JOB_ID.test(id)) return null;
   const doc = await db().collection(JOBS).doc(id).get();
-  return doc.exists ? (doc.data() as Job) : null;
+  return doc.exists ? toJob(doc.data()!) : null;
 }
 
 /** Call after any job write so the site shows it within seconds. */

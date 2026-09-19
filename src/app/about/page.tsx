@@ -21,9 +21,9 @@ export default function AboutPage() {
       <section>
         <Image src="/logo.png" alt={SITE_NAME + " logo"} width={160} height={160} className="mb-6" />
         <p className="label">About</p>
-        <h1 className="display mt-3 text-4xl sm:text-5xl">A job board for Robotics & Automation careers</h1>
+        <h1 className="display mt-3 text-4xl sm:text-5xl">A job board for engineering freshers</h1>
         <p className="mt-4 text-base">
-          {SITE_NAME} collects fresher jobs, internships, apprenticeships and trainee roles across India in the Robotics & Automation domain — core hardware roles, software roles, and non-technical roles like technical sales and support — in one place, for free.
+          {SITE_NAME} collects fresher jobs, internships, apprenticeships and trainee roles in Tamil Nadu, Puducherry, Bengaluru, Kerala and Andhra Pradesh for every engineering branch — core hardware roles, software roles, and non-technical roles like technical sales and support — in one place, for free.
         </p>
       </section>
 

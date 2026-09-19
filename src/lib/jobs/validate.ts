@@ -54,3 +54,19 @@ export function validateJobInput(
   const errors = extraRules(parsed.data, today, [...BLOCKED_HOSTS, ...extraBlockedHosts]);
   return errors.length ? { ok: false, errors } : { ok: true, job: parsed.data };
 }
+
+/** Region rule for on-site / hybrid jobs: state must be listed; a listed city set limits that state. Remote jobs pass. */
+export function regionError(
+  location: JobInput["location"],
+  regions: readonly { state: string; cities: readonly string[] }[],
+): string | null {
+  if (!regions.length || location.workMode === "remote") return null;
+  const norm = (s?: string) => (s ?? "").trim().toLowerCase().replace(/^pondicherry$/, "puducherry");
+  const region = regions.find((r) => norm(r.state) === norm(location.state));
+  const allowed = regions.map((r) => (r.cities.length ? `${r.state} (${r.cities[0]} only)` : r.state)).join(", ");
+  if (!region) return `location.state: only jobs in ${allowed} are listed (got "${location.state ?? "none"}")`;
+  if (region.cities.length && !region.cities.some((c) => norm(c) === norm(location.city))) {
+    return `location.city: in ${region.state} only ${region.cities.join(" / ")} is covered (got "${location.city ?? "none"}")`;
+  }
+  return null;
+}

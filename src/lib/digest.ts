@@ -1,6 +1,7 @@
 // Pure logic for job alerts (no I/O), so it can be unit-tested.
 import type { Job } from "@/lib/schema/job";
 import type { UserProfile } from "@/lib/schema/user";
+import { normalizeCategory } from "@/lib/schema/enums";
 import { matchPercent } from "@/lib/skills";
 
 export const MAX_JOBS_PER_DIGEST = 10;
@@ -19,7 +20,8 @@ type DigestUser = Pick<UserProfile, "skills" | "prefs" | "minMatch" | "lastDiges
 /** New active jobs since the user's last digest that fit their preferences and skills, best match first. */
 export function selectDigestJobs(jobs: Job[], user: DigestUser, today: string): DigestItem[] {
   const since = user.lastDigestAt ?? user.createdAt;
-  const { tracks, categories, types, states } = user.prefs;
+  const { tracks, types, states } = user.prefs;
+  const categories = user.prefs.categories.map(normalizeCategory);
   const lowerStates = states.map((s) => s.toLowerCase());
   return jobs
     .filter(
@@ -28,7 +30,7 @@ export function selectDigestJobs(jobs: Job[], user: DigestUser, today: string): 
         j.firstSeenAt > since &&
         (!j.deadline || j.deadline >= today) &&
         (!tracks.length || tracks.includes(j.track)) &&
-        (!categories.length || categories.includes(j.category)) &&
+        (!categories.length || categories.includes(normalizeCategory(j.category))) &&
         (!types.length || types.includes(j.type)) &&
         (!lowerStates.length || j.location.workMode === "remote" || lowerStates.includes((j.location.state ?? "").toLowerCase())),
     )

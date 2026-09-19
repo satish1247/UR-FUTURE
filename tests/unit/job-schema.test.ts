@@ -26,7 +26,7 @@ describe("validator", () => {
   it.each([
     ["bad track", (j: any) => (j.track = "hardware"), "track"],
     ["bad category", (j: any) => (j.category = "mechanical"), "category"],
-    ["category from another track", (j: any) => (j.category = "technical-sales"), 'belongs to track "non-technical"'],
+    ["category from another track", (j: any) => (j.category = "sales-business"), 'belongs to track "non-technical"'],
     ["bad type", (j: any) => (j.type = "fulltime"), "type"],
     ["http applyUrl", (j: any) => (j.applyUrl = "http://example.com/x"), "applyUrl: must be a valid https:// URL"],
     ["http resource", (j: any) => (j.help.learningPath[0].resources[0].url = "http://x.com"), "help.learningPath.0.resources.0.url"],
@@ -121,5 +121,29 @@ describe("ingestion config", () => {
   it("is valid and every keyword category belongs to its track", () => {
     expect(() => ingestionConfigSchema.parse(INGESTION_CONFIG)).not.toThrow();
     for (const k of INGESTION_CONFIG.keywords) expect(CATEGORY_INFO[k.category].track).toBe(k.track);
+  });
+});
+
+describe("regions and old categories", () => {
+  it("allows on-site jobs only in the covered regions (Bengaluru only in Karnataka), and any remote job", async () => {
+    const { regionError } = await import("@/lib/jobs/validate");
+    const R = INGESTION_CONFIG.regions;
+    const loc = (city: string, state: string, workMode: "onsite" | "remote" = "onsite") => ({ city, state, country: "India", workMode });
+    expect(regionError(loc("Chennai", "Tamil Nadu"), R)).toBeNull();
+    expect(regionError(loc("Pondicherry", "Pondicherry"), R)).toBeNull();
+    expect(regionError(loc("Kochi", "Kerala"), R)).toBeNull();
+    expect(regionError(loc("Visakhapatnam", "Andhra Pradesh"), R)).toBeNull();
+    expect(regionError(loc("Bengaluru", "Karnataka"), R)).toBeNull();
+    expect(regionError(loc("Mysuru", "Karnataka"), R)).toMatch(/Bengaluru/);
+    expect(regionError(loc("Pune", "Maharashtra"), R)).toMatch(/Tamil Nadu/);
+    expect(regionError(loc("Pune", "Maharashtra", "remote"), R)).toBeNull();
+  });
+
+  it("maps categories from the old Robotics & Automation version", async () => {
+    const { normalizeCategory } = await import("@/lib/schema/enums");
+    expect(normalizeCategory("industrial-automation")).toBe("robotics-automation");
+    expect(normalizeCategory("technical-sales")).toBe("sales-business");
+    expect(normalizeCategory("civil-construction")).toBe("civil-construction");
+    expect(normalizeCategory("nonsense")).toBe("other");
   });
 });

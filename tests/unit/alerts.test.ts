@@ -91,3 +91,11 @@ describe("sign-in token check", () => {
     expect(await verifyIdToken(fake)).toBeNull();
   });
 });
+
+describe("skills across engineering branches", () => {
+  it("finds civil, electrical, mechanical, software and business skills", () => {
+    const found = extractSkills("Site engineer with AutoCAD, STAAD Pro, Primavera; ETAP load flow; SolidWorks, Six Sigma green belt; Java, Spring Boot, AWS, Selenium; SAP MM procurement. I want to express interest.");
+    for (const s of ["AutoCAD", "STAAD Pro", "Primavera P6", "ETAP", "SolidWorks", "Six Sigma", "Java", "Spring Boot", "AWS", "Selenium", "SAP", "Procurement"]) expect(found).toContain(s);
+    expect(found).not.toContain("Express.js");
+  });
+});

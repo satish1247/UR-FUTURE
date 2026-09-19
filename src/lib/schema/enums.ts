@@ -3,28 +3,37 @@ export const TRACKS = ["core", "software", "non-technical"] as const;
 export type Track = (typeof TRACKS)[number];
 
 export const TRACK_LABELS: Record<Track, string> = {
-  core: "Core",
-  software: "Software",
+  core: "Core engineering",
+  software: "Software & IT",
   "non-technical": "Non-technical",
 };
 
-// Robotics & Automation department. Each category belongs to exactly one track.
-// One department for now; adding another = a second CATEGORY_INFO block + a department filter.
+// Engineering domains (all branches). Each category belongs to exactly one track.
 export const CATEGORY_INFO = {
-  "robotics": { track: "core", label: "Robotics & robot programming", hint: "Industrial robots, ROS/ROS2, cobots, robot cells" },
-  "industrial-automation": { track: "core", label: "PLC, SCADA & industrial automation", hint: "PLC, HMI, SCADA, DCS, drives, motion control" },
-  "instrumentation-control": { track: "core", label: "Instrumentation & process control", hint: "Sensors, calibration, control loops, process plants" },
-  "embedded-iot": { track: "core", label: "Embedded systems & IoT", hint: "Firmware, STM32/ESP32, PCB design, IoT devices" },
-  "mechatronics-design": { track: "core", label: "Mechatronics & machine design", hint: "CAD, SPM design, mechanisms, product design" },
-  "autonomous-systems": { track: "core", label: "Drones, AMRs & autonomous vehicles", hint: "UAVs, AGVs/AMRs, navigation, ADAS" },
-  "field-service": { track: "core", label: "Commissioning & field service", hint: "Installation, commissioning, maintenance, site engineer" },
-  "ai-ml-vision": { track: "software", label: "AI, ML & computer vision", hint: "Machine learning, vision inspection, generative AI" },
-  "robotics-software": { track: "software", label: "Robotics software & simulation", hint: "Simulation, motion planning, digital twins, ROS software" },
-  "rpa-workflow": { track: "software", label: "RPA & workflow automation", hint: "UiPath, n8n, Zapier, Make, automation developer" },
-  "software-development": { track: "software", label: "Software & web development", hint: "Apps, dashboards, HMI/SCADA software, testing" },
-  "technical-sales": { track: "non-technical", label: "Technical sales & pre-sales", hint: "Sales engineer, business development, pre-sales" },
-  "application-support": { track: "non-technical", label: "Application & customer support", hint: "Application engineer (support), service desk, customer success" },
-  "training-content": { track: "non-technical", label: "Training, teaching & content", hint: "Robotics trainer, instructor, technical writer" },
+  "mechanical-design": { track: "core", label: "Mechanical & design", hint: "Design engineer, CAD/CAE, product and machine design" },
+  "manufacturing-production": { track: "core", label: "Manufacturing & production", hint: "Production, process, industrial engineering, lean, plant roles" },
+  "automotive-ev": { track: "core", label: "Automotive & EV", hint: "Vehicle, EV, battery, powertrain, automotive testing" },
+  "civil-construction": { track: "core", label: "Civil & construction", hint: "Site engineer, structural, QS, planning, infrastructure" },
+  "electrical-power": { track: "core", label: "Electrical & power", hint: "Electrical design, power systems, solar, substations, MEP" },
+  "electronics-embedded": { track: "core", label: "Electronics, embedded & VLSI", hint: "Embedded, firmware, PCB, VLSI, IoT, telecom hardware" },
+  "robotics-automation": { track: "core", label: "Robotics & automation", hint: "PLC, SCADA, industrial robots, mechatronics, drones" },
+  "instrumentation-control": { track: "core", label: "Instrumentation & control", hint: "Instrumentation, control systems, calibration, process plants" },
+  "chemical-process": { track: "core", label: "Chemical, process & energy", hint: "Chemical, petroleum, refinery, pharma process, energy" },
+  "biotech-biomedical": { track: "core", label: "Biotech & biomedical", hint: "Biomedical equipment, biotech, medical devices (engineering roles)" },
+  "aerospace-marine": { track: "core", label: "Aerospace, marine & defence", hint: "Aerospace, aeronautical, shipbuilding, defence PSUs" },
+  "quality-maintenance": { track: "core", label: "Quality, maintenance & field service", hint: "QA/QC, maintenance, service and commissioning engineers" },
+  "software-development": { track: "software", label: "Software development", hint: "Developer, full-stack, backend, frontend, mobile" },
+  "data-ai": { track: "software", label: "Data, AI & ML", hint: "Data analyst, data engineer, ML, AI, computer vision" },
+  "cloud-devops-network": { track: "software", label: "Cloud, DevOps & networking", hint: "Cloud, DevOps, system admin, network engineer" },
+  "cybersecurity": { track: "software", label: "Cybersecurity", hint: "SOC analyst, security engineer, VAPT" },
+  "testing-qa": { track: "software", label: "Software testing & QA", hint: "Manual and automation testing, QA engineer" },
+  "it-support": { track: "software", label: "IT support & services", hint: "Technical support, IT helpdesk, service desk, implementation" },
+  "project-coordination": { track: "non-technical", label: "Project engineering & coordination", hint: "Project engineer, planning, site coordination, PMO" },
+  "sales-business": { track: "non-technical", label: "Technical sales & business development", hint: "Sales engineer, pre-sales, BD, marketing for engineers" },
+  "customer-support": { track: "non-technical", label: "Customer & application support", hint: "Application engineer (support), customer success, service coordination" },
+  "operations-supply": { track: "non-technical", label: "Operations, supply chain & procurement", hint: "Operations, purchase, procurement, logistics, planning" },
+  "graduate-trainee": { track: "non-technical", label: "Graduate & management trainee", hint: "GET, management trainee, rotational graduate programs" },
+  "training-content": { track: "non-technical", label: "Training, teaching & content", hint: "Technical trainer, instructor, technical writer" },
   "other": { track: null, label: "Other", hint: "Anything that fits no category above" },
 } as const satisfies Record<string, { track: Track | null; label: string; hint: string }>;
 
@@ -33,6 +42,26 @@ export const CATEGORIES = Object.keys(CATEGORY_INFO) as [Category, ...Category[]
 export const CATEGORY_LABELS = Object.fromEntries(
   CATEGORIES.map((c) => [c, CATEGORY_INFO[c].label]),
 ) as Record<Category, string>;
+
+// Categories used before the site covered every branch; stored jobs may still have them.
+export const LEGACY_CATEGORIES: Record<string, Category> = {
+  robotics: "robotics-automation",
+  "industrial-automation": "robotics-automation",
+  "autonomous-systems": "robotics-automation",
+  "embedded-iot": "electronics-embedded",
+  "mechatronics-design": "mechanical-design",
+  "field-service": "quality-maintenance",
+  "ai-ml-vision": "data-ai",
+  "robotics-software": "software-development",
+  "rpa-workflow": "software-development",
+  "technical-sales": "sales-business",
+  "application-support": "customer-support",
+};
+
+/** Any stored category (current or legacy) -> a current category. */
+export function normalizeCategory(c: string): Category {
+  return c in CATEGORY_INFO ? (c as Category) : LEGACY_CATEGORIES[c] ?? "other";
+}
 
 export function categoriesFor(track: Track | undefined): Category[] {
   return CATEGORIES.filter((c) => !track || CATEGORY_INFO[c].track === track || CATEGORY_INFO[c].track === null);
