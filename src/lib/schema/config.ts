@@ -31,6 +31,12 @@ export const ingestionConfigSchema = z.object({
   maxMinYears: z.number().int().min(0).max(4).default(2),
   perRunCap: z.number().int().min(1).max(100).default(40),
   blockedHosts: list(plainText(120), 0, 50).default([]),
+  /** Free learning links already checked; the job finder may reuse them without opening each one. */
+  starterResources: list(
+    z.object({ area: plainText(60), title: plainText(160), url: httpsUrl(), platform: plainText(60), kind: z.enum(["youtube", "course", "docs", "article"]) }),
+    0,
+    40,
+  ).default([]),
   /** Job-portal scrapers run through the Apify connector (pay-per-result; keep within the free $5/month). */
   apify: list(
     z.object({

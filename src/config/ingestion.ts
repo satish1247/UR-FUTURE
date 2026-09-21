@@ -104,6 +104,25 @@ export const INGESTION_CONFIG: IngestionConfig = {
   perRunCap: 40,
   // Job pages that need a login just to view. Never use as sourceUrl/applyUrl.
   blockedHosts: ["glassdoor.co.in", "glassdoor.com"],
+  // Free learning links already checked; reuse them instead of opening pages (weekly cron drops dead ones).
+  starterResources: [
+    { area: "Mechanical / CAD", title: "SolidWorks tutorials", url: "https://www.solidworks.com/support/free-solidworks-tutorials", platform: "SolidWorks", kind: "docs" },
+    { area: "Mechanical / manufacturing", title: "NPTEL engineering courses", url: "https://nptel.ac.in/courses", platform: "NPTEL", kind: "course" },
+    { area: "Civil", title: "AutoCAD product support", url: "https://www.autodesk.com/support/technical/product/autocad", platform: "Autodesk", kind: "docs" },
+    { area: "Electronics / embedded", title: "Arduino documentation", url: "https://docs.arduino.cc/", platform: "Arduino", kind: "docs" },
+    { area: "Electronics / embedded", title: "ESP-IDF programming guide", url: "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/", platform: "Espressif", kind: "docs" },
+    { area: "Robotics / automation", title: "ROS 2 tutorials", url: "https://docs.ros.org/en/humble/Tutorials.html", platform: "ROS", kind: "docs" },
+    { area: "Automation / PLC", title: "OpenPLC documentation", url: "https://autonomylogic.com/docs/", platform: "OpenPLC", kind: "docs" },
+    { area: "Software", title: "freeCodeCamp curriculum", url: "https://www.freecodecamp.org/learn/", platform: "freeCodeCamp", kind: "course" },
+    { area: "Software / Python", title: "The Python tutorial", url: "https://docs.python.org/3/tutorial/", platform: "Python", kind: "docs" },
+    { area: "Software / Java", title: "Java learning resources", url: "https://dev.java/learn/", platform: "Oracle", kind: "docs" },
+    { area: "Data / AI", title: "scikit-learn user guide", url: "https://scikit-learn.org/stable/user_guide.html", platform: "scikit-learn", kind: "docs" },
+    { area: "Data / SQL", title: "PostgreSQL tutorial", url: "https://www.postgresql.org/docs/current/tutorial.html", platform: "PostgreSQL", kind: "docs" },
+    { area: "Cloud / DevOps", title: "Docker get started", url: "https://docs.docker.com/get-started/", platform: "Docker", kind: "docs" },
+    { area: "Testing", title: "Selenium documentation", url: "https://www.selenium.dev/documentation/", platform: "Selenium", kind: "docs" },
+    { area: "Cybersecurity", title: "OWASP Top Ten", url: "https://owasp.org/www-project-top-ten/", platform: "OWASP", kind: "docs" },
+    { area: "Non-technical / writing", title: "Google technical writing courses", url: "https://developers.google.com/tech-writing", platform: "Google", kind: "course" },
+  ],
   // Job portals scraped through the Apify connector. About $0.40-0.70 per 1,000 results;
   // ~330 results/day stays inside Apify's free $5/month.
   apify: [
@@ -111,7 +130,7 @@ export const INGESTION_CONFIG: IngestionConfig = {
       platform: "Naukri",
       actor: "valig/naukri-jobs-scraper",
       maxResultsPerRun: 20,
-      input: { keywords: "<keyword group>", location: "<city>", experience: 0, jobAge: "3", sort: "date", limit: 20 },
+      input: { keywords: "<keyword group>", location: "<city>", experience: 0, jobAge: "3", sort: "f", limit: 20 },
       note: "About 12 runs per day: rotate keyword groups across Chennai, Bengaluru, Coimbatore, Kochi, Thiruvananthapuram, Visakhapatnam, Puducherry. Cover core, software and non-technical groups every day.",
     },
     {
